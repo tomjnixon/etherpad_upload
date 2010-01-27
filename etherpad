@@ -1,5 +1,7 @@
 #!/bin/bash
 
+pad="etherpad"
+
 function etherpad_upload()
 {
     etherpad="http://etherpad.com"
@@ -31,9 +33,15 @@ function etherpad_upload()
     echo $etherpad/$pad_id
 }
 
+function sprunge()
+{
+    file=$1
+    curl -F "sprunge=<$file" http://sprunge.us | tr -d "[:space:]"
+}
+
 file=${1:-"-"}
 
-url=$(etherpad_upload $file)
+url=$($pad $file)
 
 echo $url
 echo $url | xclip -i
