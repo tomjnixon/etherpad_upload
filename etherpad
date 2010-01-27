@@ -1,36 +1,42 @@
 #!/bin/bash
 
-etherpad="http://etherpad.com"
-newpad_url="$etherpad/ep/pad/newpad"
-import_url="$etherpad/ep/pad/impexp/import"
-import_url_2="$etherpad/ep/pad/impexp/import2"
+function etherpad_upload()
+{
+    etherpad="http://etherpad.com"
+    newpad_url="$etherpad/ep/pad/newpad"
+    import_url="$etherpad/ep/pad/impexp/import"
+    import_url_2="$etherpad/ep/pad/impexp/import2"
+    file=$1
+    #cookies="/tmp/etherpad-cookie-jar"
+    cookies=$(mktemp)
 
-#cookies="/tmp/etherpad-cookie-jar"
-cookies=$(mktemp)
+    curl -I -c $cookies $etherpad > /dev/null
+    
+    cookie_args="-b $cookies -c $cookies"
+    
+    pad_id=$(curl -IL $cookie_args $newpad_url \
+	| grep Location: \
+	| grep -o '[^/]*$' \
+	| tr -dc [:alnum:] \
+	| tail -n 1)
+    
+    token=$(curl $cookie_args  -F "file=@$file;filename=$file.txt" -F "padId=$pad_id" $import_url \
+	| grep -o "'[^']*')" \
+	| sed "s/'\(.*\)')/\1/" \
+	| tr -dc [:alnum:])
 
-curl -I -c $cookies $etherpad > /dev/null
-
-cookie_args="-b $cookies -c $cookies"
+    curl $cookie_args "$import_url_2?padId=$pad_id&token=$token" > /dev/null
+    
+    rm $cookies
+    echo $etherpad/$pad_id
+}
 
 file=${1:-"-"}
 
-pad_id=$(curl -IL $cookie_args $newpad_url \
-    | grep Location: \
-    | grep -o '[^/]*$' \
-    | tr -dc [:alnum:] \
-    | tail -n 1)
+url=$(etherpad_upload $file)
 
-token=$(curl $cookie_args  -F "file=@$file;filename=$file.txt" -F "padId=$pad_id" $import_url \
-    | grep -o "'[^']*')" \
-    | sed "s/'\(.*\)')/\1/" \
-    | tr -dc [:alnum:])
+echo $url
+echo $url | xclip -i
 
-curl $cookie_args "$import_url_2?padId=$pad_id&token=$token" 
-
-rm $cookies
-
-echo
-echo $etherpad/$pad_id
-echo $etherpad/$pad_id | xclip -i
 
 
