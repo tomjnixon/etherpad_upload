@@ -1,6 +1,6 @@
 #!/bin/bash
 
-pad="etherpad"
+pad="etherpad_upload"
 
 function etherpad_upload()
 {
@@ -33,7 +33,7 @@ function etherpad_upload()
     echo $etherpad/$pad_id
 }
 
-function sprunge()
+function sprunge_upload()
 {
     file=$1
     curl -F "sprunge=<$file" http://sprunge.us | tr -d "[:space:]"
